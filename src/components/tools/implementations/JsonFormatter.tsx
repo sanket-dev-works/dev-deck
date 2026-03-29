@@ -1,65 +1,69 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { CopyButton } from '@/components/tools/CopyButton';
+import { ToolInput } from '@/components/tools/ToolInput';
+import { ToolOutput } from '@/components/tools/ToolOutput';
+import { ToolActions } from '@/components/tools/ToolActions';
+import { ClearButton } from '@/components/tools/ClearButton';
 import { ErrorMessage } from '@/components/common/ErrorMessage';
+import { formatJson, minifyJson, parseJson } from '@/lib/tools/jsonFormatter';
+import { getToolBySlug } from '@/config/tools';
 
-const SAMPLE_JSON = '{"name":"DevDeck","version":1,"tools":["json","jwt","regex"],"config":{"theme":"dark","language":"en"}}';
+const SAMPLE_JSON =
+  getToolBySlug('json-formatter')?.sampleInput ??
+  '{"name":"DevDeck","version":1,"tools":["json","jwt","regex"]}';
 
 export default function JsonFormatter() {
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
   const [error, setError] = useState('');
 
-  function validateAndFormat(value: string, indent?: number) {
-    if (!value.trim()) {
+  function applyFormat(indent: number) {
+    const result = formatJson(input, indent);
+    if (!result.ok) {
       setOutput('');
-      setError('');
+      setError(result.error);
       return;
     }
-    try {
-      const parsed = JSON.parse(value);
-      const formatted = indent !== undefined
-        ? JSON.stringify(parsed, null, indent)
-        : JSON.stringify(parsed);
-      setOutput(formatted);
-      setError('');
-    } catch (e) {
+    setOutput(result.value);
+    setError('');
+  }
+
+  function applyMinify() {
+    const result = minifyJson(input);
+    if (!result.ok) {
       setOutput('');
-      setError(e instanceof Error ? e.message : 'Invalid JSON');
+      setError(result.error);
+      return;
     }
+    setOutput(result.value);
+    setError('');
   }
 
   function handleInputChange(value: string) {
     setInput(value);
-    if (value.trim()) {
-      try {
-        JSON.parse(value);
-        setError('');
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Invalid JSON');
-        setOutput('');
-      }
-    } else {
+    if (!value.trim()) {
       setError('');
       setOutput('');
+      return;
     }
-  }
-
-  function handleFormat(indent: number) {
-    validateAndFormat(input, indent);
-  }
-
-  function handleMinify() {
-    validateAndFormat(input);
+    const parsed = parseJson(value);
+    if (!parsed.ok) {
+      setError(parsed.error || 'Invalid JSON');
+      setOutput('');
+    } else {
+      setError('');
+    }
   }
 
   function handleSample() {
     setInput(SAMPLE_JSON);
-    validateAndFormat(SAMPLE_JSON, 2);
+    const result = formatJson(SAMPLE_JSON, 2);
+    if (result.ok) {
+      setOutput(result.value);
+      setError('');
+    }
   }
 
   function handleClear() {
@@ -70,54 +74,38 @@ export default function JsonFormatter() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <Button onClick={() => handleFormat(2)} variant="secondary" size="sm">
+      <ToolActions>
+        <Button onClick={() => applyFormat(2)} variant="secondary" size="sm">
           Format (2-space)
         </Button>
-        <Button onClick={() => handleFormat(4)} variant="secondary" size="sm">
+        <Button onClick={() => applyFormat(4)} variant="secondary" size="sm">
           Format (4-space)
         </Button>
-        <Button onClick={handleMinify} variant="secondary" size="sm">
+        <Button onClick={applyMinify} variant="secondary" size="sm">
           Minify
         </Button>
         <Button onClick={handleSample} variant="outline" size="sm">
-          Sample Data
+          Sample data
         </Button>
-        <Button onClick={handleClear} variant="ghost" size="sm">
-          Clear
-        </Button>
-      </div>
+        <ClearButton onClear={handleClear} disabled={!input && !output} />
+      </ToolActions>
 
       {error && <ErrorMessage message={error} />}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">Input</label>
-          <Textarea
-            value={input}
-            onChange={(e) => handleInputChange(e.target.value)}
-            placeholder="Paste your JSON here..."
-            className="min-h-[300px] font-mono text-sm"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-muted-foreground">Output</label>
-            <CopyButton text={output} label="Copy" size="sm" variant="ghost" />
-          </div>
-          <Card className="min-h-[300px]">
-            <CardContent>
-              <pre className="font-mono text-sm whitespace-pre-wrap break-all text-foreground">
-                {output || (
-                  <span className="text-muted-foreground">
-                    Formatted JSON will appear here...
-                  </span>
-                )}
-              </pre>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ToolInput
+          label="Input"
+          value={input}
+          onChange={(e) => handleInputChange(e.target.value)}
+          placeholder="Paste your JSON here..."
+          className="min-h-[300px]"
+        />
+        <ToolOutput
+          label="Output"
+          value={output}
+          emptyHint="Formatted JSON will appear here…"
+          minHeightClassName="min-h-[300px]"
+        />
       </div>
     </div>
   );

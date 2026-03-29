@@ -1,35 +1,29 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { searchTools } from '@/config/tools';
-import { Tool } from '@/types/tool';
 
 export function SearchBar({ className }: { className?: string }) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Tool[]>([]);
-  const [open, setOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const router = useRouter();
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (query.trim()) {
-      setResults(searchTools(query));
-      setOpen(true);
-      setSelectedIndex(0);
-    } else {
-      setResults([]);
-      setOpen(false);
-    }
-  }, [query]);
+  const results = useMemo(
+    () => (query.trim() ? searchTools(query) : []),
+    [query]
+  );
+
+  const showPanel = panelOpen && query.trim().length > 0;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
+        setPanelOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -38,12 +32,12 @@ export function SearchBar({ className }: { className?: string }) {
 
   function navigateToTool(slug: string) {
     setQuery('');
-    setOpen(false);
+    setPanelOpen(false);
     router.push(`/tools/${slug}`);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (!open || results.length === 0) return;
+    if (!showPanel || results.length === 0) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setSelectedIndex((i) => (i + 1) % results.length);
@@ -54,7 +48,7 @@ export function SearchBar({ className }: { className?: string }) {
       e.preventDefault();
       navigateToTool(results[selectedIndex].slug);
     } else if (e.key === 'Escape') {
-      setOpen(false);
+      setPanelOpen(false);
     }
   }
 
@@ -65,30 +59,40 @@ export function SearchBar({ className }: { className?: string }) {
         <Input
           placeholder="Search tools..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setQuery(v);
+            setSelectedIndex(0);
+            setPanelOpen(v.trim().length > 0);
+          }}
           onKeyDown={handleKeyDown}
-          onFocus={() => query.trim() && setOpen(true)}
-          className="pl-9 h-9"
+          onFocus={() => {
+            if (query.trim()) setPanelOpen(true);
+          }}
+          className="h-9 pl-9"
         />
       </div>
-      {open && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden">
+      {showPanel && results.length > 0 && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-border bg-popover shadow-lg">
           {results.map((tool, i) => (
             <button
               key={tool.slug}
+              type="button"
               onClick={() => navigateToTool(tool.slug)}
-              className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 transition-colors ${
-                i === selectedIndex ? 'bg-accent text-accent-foreground' : 'text-popover-foreground hover:bg-accent/50'
+              className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
+                i === selectedIndex
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-popover-foreground hover:bg-accent/50'
               }`}
             >
               <span className="font-medium">{tool.name}</span>
-              <span className="text-xs text-muted-foreground ml-auto">{tool.shortDescription}</span>
+              <span className="ml-auto text-xs text-muted-foreground">{tool.shortDescription}</span>
             </button>
           ))}
         </div>
       )}
-      {open && query.trim() && results.length === 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg z-50 p-4 text-center text-sm text-muted-foreground">
+      {showPanel && results.length === 0 && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-border bg-popover p-4 text-center text-sm text-muted-foreground shadow-lg">
           No tools found for &quot;{query}&quot;
         </div>
       )}

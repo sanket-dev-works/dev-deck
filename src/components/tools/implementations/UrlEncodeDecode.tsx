@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,65 +19,72 @@ interface ParsedUrl {
   hash: string;
 }
 
+function computeUrlResult(
+  input: string,
+  mode: Mode
+): { output: string; error: string; parsedUrl: ParsedUrl | null } {
+  if (!input.trim()) {
+    return { output: '', error: '', parsedUrl: null };
+  }
+
+  try {
+    if (mode === 'encode') {
+      return { output: encodeURIComponent(input), error: '', parsedUrl: null };
+    }
+    if (mode === 'decode') {
+      return { output: decodeURIComponent(input), error: '', parsedUrl: null };
+    }
+    const url = new URL(input);
+    const params: { key: string; value: string }[] = [];
+    url.searchParams.forEach((value, key) => {
+      params.push({ key, value });
+    });
+    return {
+      output: '',
+      error: '',
+      parsedUrl: {
+        protocol: url.protocol,
+        host: url.host,
+        pathname: url.pathname,
+        searchParams: params,
+        hash: url.hash,
+      },
+    };
+  } catch {
+    if (mode === 'decode') {
+      return {
+        output: '',
+        error: 'Invalid encoded string. Please check your input.',
+        parsedUrl: null,
+      };
+    }
+    if (mode === 'parse') {
+      return {
+        output: '',
+        error: 'Invalid URL. Please enter a valid URL to parse.',
+        parsedUrl: null,
+      };
+    }
+    return {
+      output: '',
+      error: 'Failed to encode the input string.',
+      parsedUrl: null,
+    };
+  }
+}
+
 export default function UrlEncodeDecode() {
   const [mode, setMode] = useState<Mode>('encode');
   const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [error, setError] = useState('');
-  const [parsedUrl, setParsedUrl] = useState<ParsedUrl | null>(null);
 
-  useEffect(() => {
-    if (!input.trim()) {
-      setOutput('');
-      setError('');
-      setParsedUrl(null);
-      return;
-    }
-
-    try {
-      if (mode === 'encode') {
-        setOutput(encodeURIComponent(input));
-        setError('');
-        setParsedUrl(null);
-      } else if (mode === 'decode') {
-        setOutput(decodeURIComponent(input));
-        setError('');
-        setParsedUrl(null);
-      } else {
-        const url = new URL(input);
-        const params: { key: string; value: string }[] = [];
-        url.searchParams.forEach((value, key) => {
-          params.push({ key, value });
-        });
-        setParsedUrl({
-          protocol: url.protocol,
-          host: url.host,
-          pathname: url.pathname,
-          searchParams: params,
-          hash: url.hash,
-        });
-        setOutput('');
-        setError('');
-      }
-    } catch {
-      setOutput('');
-      setParsedUrl(null);
-      if (mode === 'decode') {
-        setError('Invalid encoded string. Please check your input.');
-      } else if (mode === 'parse') {
-        setError('Invalid URL. Please enter a valid URL to parse.');
-      } else {
-        setError('Failed to encode the input string.');
-      }
-    }
-  }, [input, mode]);
+  const { output, error, parsedUrl } = useMemo(
+    () => computeUrlResult(input, mode),
+    [input, mode]
+  );
 
   function handleModeChange(newMode: Mode) {
     setMode(newMode);
     setInput('');
-    setOutput('');
-    setError('');
-    setParsedUrl(null);
   }
 
   function handleSample() {
@@ -86,9 +93,6 @@ export default function UrlEncodeDecode() {
 
   function handleClear() {
     setInput('');
-    setOutput('');
-    setError('');
-    setParsedUrl(null);
   }
 
   const modes: { value: Mode; label: string }[] = [
@@ -100,10 +104,11 @@ export default function UrlEncodeDecode() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <div className="flex rounded-lg border border-border overflow-hidden">
+        <div className="flex overflow-hidden rounded-lg border border-border">
           {modes.map((m) => (
             <button
               key={m.value}
+              type="button"
               onClick={() => handleModeChange(m.value)}
               className={`px-4 py-1.5 text-sm font-medium transition-colors ${
                 mode === m.value
@@ -139,57 +144,57 @@ export default function UrlEncodeDecode() {
           </div>
 
           {parsedUrl && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Card size="sm">
                 <CardContent>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="mb-1 flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">Protocol</span>
                     <CopyButton text={parsedUrl.protocol} size="sm" variant="ghost" />
                   </div>
-                  <p className="font-mono text-sm break-all text-foreground">{parsedUrl.protocol}</p>
+                  <p className="break-all font-mono text-sm text-foreground">{parsedUrl.protocol}</p>
                 </CardContent>
               </Card>
 
               <Card size="sm">
                 <CardContent>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="mb-1 flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">Host</span>
                     <CopyButton text={parsedUrl.host} size="sm" variant="ghost" />
                   </div>
-                  <p className="font-mono text-sm break-all text-foreground">{parsedUrl.host}</p>
+                  <p className="break-all font-mono text-sm text-foreground">{parsedUrl.host}</p>
                 </CardContent>
               </Card>
 
               <Card size="sm">
                 <CardContent>
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="mb-1 flex items-center justify-between">
                     <span className="text-xs font-medium text-muted-foreground">Pathname</span>
                     <CopyButton text={parsedUrl.pathname} size="sm" variant="ghost" />
                   </div>
-                  <p className="font-mono text-sm break-all text-foreground">{parsedUrl.pathname}</p>
+                  <p className="break-all font-mono text-sm text-foreground">{parsedUrl.pathname}</p>
                 </CardContent>
               </Card>
 
               {parsedUrl.hash && (
                 <Card size="sm">
                   <CardContent>
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="mb-1 flex items-center justify-between">
                       <span className="text-xs font-medium text-muted-foreground">Hash</span>
                       <CopyButton text={parsedUrl.hash} size="sm" variant="ghost" />
                     </div>
-                    <p className="font-mono text-sm break-all text-foreground">{parsedUrl.hash}</p>
+                    <p className="break-all font-mono text-sm text-foreground">{parsedUrl.hash}</p>
                   </CardContent>
                 </Card>
               )}
 
               {parsedUrl.searchParams.map((param, index) => (
-                <Card key={index} size="sm">
+                <Card key={`${param.key}-${index}`} size="sm">
                   <CardContent>
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="mb-1 flex items-center justify-between">
                       <span className="text-xs font-medium text-muted-foreground">{param.key}</span>
                       <CopyButton text={param.value} size="sm" variant="ghost" />
                     </div>
-                    <p className="font-mono text-sm break-all text-foreground">{param.value}</p>
+                    <p className="break-all font-mono text-sm text-foreground">{param.value}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -197,11 +202,13 @@ export default function UrlEncodeDecode() {
           )}
 
           {!parsedUrl && !error && input.trim() === '' && (
-            <p className="text-sm text-muted-foreground">Enter a URL above to see its parsed components.</p>
+            <p className="text-sm text-muted-foreground">
+              Enter a URL above to see its parsed components.
+            </p>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">
               {mode === 'encode' ? 'Plain Text' : 'Encoded Input'}
@@ -227,7 +234,7 @@ export default function UrlEncodeDecode() {
             </div>
             <Card className="min-h-[250px]">
               <CardContent>
-                <pre className="font-mono text-sm whitespace-pre-wrap break-all text-foreground">
+                <pre className="whitespace-pre-wrap break-all font-mono text-sm text-foreground">
                   {output || (
                     <span className="text-muted-foreground">
                       {mode === 'encode' ? 'Encoded output' : 'Decoded output'} will appear here...

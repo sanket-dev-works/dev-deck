@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-dm-sans);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-dm-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,6 +39,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-muted: var(--brand-muted);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -81,6 +84,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --brand: oklch(0.52 0.14 200);
+  --brand-foreground: oklch(0.99 0 0);
+  --brand-muted: oklch(0.94 0.04 200);
 }
 
 .dark {
@@ -115,6 +121,9 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --brand: oklch(0.78 0.12 195);
+  --brand-foreground: oklch(0.12 0.02 260);
+  --brand-muted: oklch(0.22 0.04 260);
 }
 
 @layer base {
@@ -126,5 +135,33 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .bg-app-mesh {
+    background-color: var(--background);
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, oklch(0.55 0.12 200 / 12%), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, oklch(0.6 0.08 280 / 8%), transparent),
+      radial-gradient(ellipse 50% 30% at 0% 100%, oklch(0.55 0.1 160 / 6%), transparent);
+  }
+  .dark .bg-app-mesh {
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, oklch(0.55 0.14 200 / 25%), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, oklch(0.45 0.12 280 / 15%), transparent),
+      radial-gradient(ellipse 50% 30% at 0% 100%, oklch(0.5 0.1 160 / 12%), transparent);
+  }
+  .bg-grid-fade {
+    background-size: 24px 24px;
+    background-image:
+      linear-gradient(to right, oklch(0.5 0 0 / 6%) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(0.5 0 0 / 6%) 1px, transparent 1px);
+    mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+  }
+  .dark .bg-grid-fade {
+    background-image:
+      linear-gradient(to right, oklch(1 0 0 / 5%) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(1 0 0 / 5%) 1px, transparent 1px);
   }
 }

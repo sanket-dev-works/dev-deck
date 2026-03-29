@@ -18,14 +18,25 @@ function ToolsContent() {
     : tools.filter((t) => t.category === activeCategory);
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-8">
-      <h1 className="text-2xl font-bold tracking-tight mb-2">All Tools</h1>
-      <p className="text-muted-foreground mb-6">Browse all {tools.length} developer utilities.</p>
+    <div className="container mx-auto max-w-6xl px-4 py-10 md:py-14">
+      <p className="mb-1 font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
+        Library
+      </p>
+      <h1 className="mb-2 text-3xl font-bold tracking-tight md:text-4xl">All tools</h1>
+      <p className="mb-8 max-w-xl text-muted-foreground leading-relaxed">
+        Browse every utility in DevDeck — <span className="text-foreground/85 font-mono text-sm">{tools.length}</span>{' '}
+        tools, same privacy: runs in your browser only.
+      </p>
 
-      <div className="flex flex-wrap gap-2 mb-8">
+      <div className="mb-10 flex flex-wrap gap-2">
         <Button
           variant={activeCategory === 'all' ? 'default' : 'outline'}
           size="sm"
+          className={
+            activeCategory === 'all'
+              ? 'shadow-sm'
+              : 'border-border/70 bg-background/60 backdrop-blur-sm hover:border-brand/35 dark:bg-card/50'
+          }
           onClick={() => setActiveCategory('all')}
         >
           All
@@ -35,6 +46,11 @@ function ToolsContent() {
             key={cat.slug}
             variant={activeCategory === cat.slug ? 'default' : 'outline'}
             size="sm"
+            className={
+              activeCategory === cat.slug
+                ? 'shadow-sm'
+                : 'border-border/70 bg-background/60 backdrop-blur-sm hover:border-brand/35 dark:bg-card/50'
+            }
             onClick={() => setActiveCategory(cat.slug)}
           >
             {cat.name}
@@ -49,8 +65,8 @@ function ToolsContent() {
       </div>
 
       {filteredTools.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          No tools found in this category.
+        <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 py-14 text-center text-muted-foreground backdrop-blur-sm dark:bg-muted/10">
+          No tools in this category.
         </div>
       )}
     </div>

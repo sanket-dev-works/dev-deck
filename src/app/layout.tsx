@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CommandPalette } from "@/components/common/CommandPalette";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fontSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const fontMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -30,13 +32,23 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fontSans.variable} ${fontMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-background">
         <Providers>
           <Navbar />
-          <main className="flex-1">{children}</main>
+          <main className="relative flex-1">
+            <div
+              className="pointer-events-none absolute inset-0 -z-10 bg-app-mesh"
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute inset-0 -z-10 bg-grid-fade"
+              aria-hidden
+            />
+            <div className="relative z-0">{children}</div>
+          </main>
           <Footer />
           <CommandPalette />
         </Providers>

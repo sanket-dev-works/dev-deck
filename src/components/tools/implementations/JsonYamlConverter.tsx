@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,33 +28,25 @@ type Direction = 'json-to-yaml' | 'yaml-to-json';
 
 export default function JsonYamlConverter() {
   const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
   const [direction, setDirection] = useState<Direction>('json-to-yaml');
-  const [error, setError] = useState('');
   const [indent, setIndent] = useState<number>(2);
 
-  useEffect(() => {
+  const { output, error } = useMemo(() => {
     if (!input.trim()) {
-      setOutput('');
-      setError('');
-      return;
+      return { output: '', error: '' };
     }
-
     try {
       if (direction === 'json-to-yaml') {
         const parsed = JSON.parse(input);
-        const result = yamlStringify(parsed, { indent });
-        setOutput(result);
-        setError('');
-      } else {
-        const parsed = yamlParse(input);
-        const result = JSON.stringify(parsed, null, indent);
-        setOutput(result);
-        setError('');
+        return { output: yamlStringify(parsed, { indent }), error: '' };
       }
+      const parsed = yamlParse(input);
+      return { output: JSON.stringify(parsed, null, indent), error: '' };
     } catch (e) {
-      setOutput('');
-      setError(e instanceof Error ? e.message : 'Conversion failed');
+      return {
+        output: '',
+        error: e instanceof Error ? e.message : 'Conversion failed',
+      };
     }
   }, [input, direction, indent]);
 
@@ -68,8 +60,6 @@ export default function JsonYamlConverter() {
 
   function handleClear() {
     setInput('');
-    setOutput('');
-    setError('');
   }
 
   return (

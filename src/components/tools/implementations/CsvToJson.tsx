@@ -8,12 +8,14 @@ import { CopyButton } from '@/components/tools/CopyButton';
 import { ErrorMessage } from '@/components/common/ErrorMessage';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import Papa from 'papaparse';
+import { csvToJson } from '@/lib/tools/csvToJson';
+import { getToolBySlug } from '@/config/tools';
 
-const SAMPLE_CSV = `name,age,email,city
+const SAMPLE_CSV =
+  getToolBySlug('csv-to-json')?.sampleInput ??
+  `name,age,email,city
 Alice,30,alice@example.com,New York
-Bob,25,bob@example.com,San Francisco
-Charlie,35,charlie@example.com,Chicago`;
+Bob,25,bob@example.com,San Francisco`;
 
 export default function CsvToJson() {
   const [input, setInput] = useState('');
@@ -29,46 +31,15 @@ export default function CsvToJson() {
     setRowCount(0);
     setColCount(0);
 
-    if (!input.trim()) {
-      setError('Please enter CSV data to convert.');
+    const result = csvToJson(input, { header: hasHeader });
+    if (!result.ok) {
+      setError(result.error);
       return;
     }
 
-    try {
-      const result = Papa.parse(input.trim(), {
-        header: hasHeader,
-        skipEmptyLines: true,
-        dynamicTyping: true,
-      });
-
-      if (result.errors.length > 0) {
-        const errorMessages = result.errors
-          .slice(0, 3)
-          .map((e) => `Row ${e.row ?? '?'}: ${e.message}`)
-          .join('; ');
-        setError(`CSV parsing errors: ${errorMessages}`);
-        return;
-      }
-
-      if (!result.data || result.data.length === 0) {
-        setError('No data found in the CSV input.');
-        return;
-      }
-
-      const json = JSON.stringify(result.data, null, 2);
-      setOutput(json);
-      setRowCount(result.data.length);
-
-      if (hasHeader && result.meta.fields) {
-        setColCount(result.meta.fields.length);
-      } else if (Array.isArray(result.data[0])) {
-        setColCount((result.data[0] as unknown[]).length);
-      }
-    } catch (e) {
-      setError(
-        e instanceof Error ? e.message : 'Failed to parse CSV data.'
-      );
-    }
+    setOutput(result.json);
+    setRowCount(result.rowCount);
+    setColCount(result.colCount);
   }
 
   function handleLoadSample() {
@@ -84,20 +55,20 @@ export default function CsvToJson() {
     <div className="space-y-4">
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium text-foreground">CSV Input</label>
+          <span className="text-sm font-medium text-foreground">CSV input</span>
           <Button variant="outline" size="sm" onClick={handleLoadSample}>
-            Load Sample
+            Load sample
           </Button>
         </div>
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Paste your CSV data here..."
+          placeholder="Paste your CSV data here…"
           className="min-h-32 font-mono text-xs"
         />
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <Switch
             checked={hasHeader}
@@ -116,17 +87,17 @@ export default function CsvToJson() {
       {output && (
         <Card>
           <CardHeader className="flex-row items-center justify-between">
-            <div className="flex items-center gap-3">
-              <CardTitle>JSON Output</CardTitle>
+            <div className="flex flex-wrap items-center gap-3">
+              <CardTitle>JSON output</CardTitle>
               <span className="text-xs text-muted-foreground">
                 {rowCount} row{rowCount !== 1 ? 's' : ''}
-                {colCount > 0 && ` \u00d7 ${colCount} column${colCount !== 1 ? 's' : ''}`}
+                {colCount > 0 && ` × ${colCount} column${colCount !== 1 ? 's' : ''}`}
               </span>
             </div>
             <CopyButton text={output} />
           </CardHeader>
           <CardContent>
-            <pre className="overflow-auto rounded-md bg-muted p-3 text-xs font-mono text-foreground max-h-96">
+            <pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-xs text-foreground">
               {output}
             </pre>
           </CardContent>

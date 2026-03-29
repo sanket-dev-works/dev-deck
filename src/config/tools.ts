@@ -1,5 +1,15 @@
 import { Tool } from '@/types/tool';
 
+/** Curated picks for the homepage — high-traffic, broadly useful utilities */
+export const POPULAR_TOOL_SLUGS = [
+  'json-formatter',
+  'jwt-decoder',
+  'base64-encode-decode',
+  'regex-tester',
+  'uuid-generator',
+  'timestamp-converter',
+] as const;
+
 export const tools: Tool[] = [
   {
     slug: 'json-formatter',
@@ -197,6 +207,12 @@ export const tools: Tool[] = [
 
 export function getToolBySlug(slug: string): Tool | undefined {
   return tools.find((t) => t.slug === slug);
+}
+
+export function getPopularTools(): Tool[] {
+  return POPULAR_TOOL_SLUGS.map((slug) => getToolBySlug(slug)).filter(
+    (t): t is Tool => t !== undefined
+  );
 }
 
 export function getToolsByCategory(category: string): Tool[] {

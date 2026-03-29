@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   CommandDialog,
@@ -18,8 +18,9 @@ import { getRecentTools } from '@/lib/storage/recentTools';
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
-  const [recentSlugs, setRecentSlugs] = useState<string[]>([]);
   const router = useRouter();
+
+  const recentSlugs = useMemo(() => (open ? getRecentTools() : []), [open]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -31,12 +32,6 @@ export function CommandPalette() {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  useEffect(() => {
-    if (open) {
-      setRecentSlugs(getRecentTools());
-    }
-  }, [open]);
 
   function navigateTo(path: string) {
     setOpen(false);

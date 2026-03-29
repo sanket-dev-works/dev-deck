@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Menu, Terminal, X } from 'lucide-react';
+import { Menu, Terminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { SearchBar } from '@/components/common/SearchBar';
@@ -12,11 +12,19 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/55">
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand/25 to-transparent" aria-hidden />
       <div className="container mx-auto flex h-14 items-center px-4 gap-4">
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg mr-4">
-          <Terminal className="h-5 w-5" />
-          <span>DevDeck</span>
+        <Link
+          href="/"
+          className="group mr-4 flex items-center gap-2 text-lg font-bold tracking-tight"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-muted/50 text-brand shadow-sm transition-colors group-hover:border-brand/40 group-hover:bg-brand-muted/60">
+            <Terminal className="h-4 w-4" />
+          </span>
+          <span className="bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent dark:from-foreground dark:to-foreground/75">
+            DevDeck
+          </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">

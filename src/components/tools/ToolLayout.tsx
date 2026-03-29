@@ -19,7 +19,9 @@ export function ToolLayout({ tool, children }: ToolLayoutProps) {
   return (
     <div className="container mx-auto max-w-6xl px-4 py-6">
       <ToolHeader tool={tool} />
-      {children}
+      <section aria-label="Tool workspace" className="space-y-4">
+        {children}
+      </section>
       <RelatedTools currentTool={tool} />
     </div>
   );
